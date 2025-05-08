@@ -1,25 +1,61 @@
 services:
-  app:
-    container_name: app
+  backend:
     build: ./backend
     restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres
+      - PORT=3000
     ports:
       - '127.0.0.1:3000:3000'
     networks:
-      - app-network
+      - backend-network
 
-  tunnel:
-    container_name: tunnel
-    image: cloudflare/cloudflared:2025.4.2
+  postgres:
+    image: postgres:17.4-alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    ports:
+      - '127.0.0.1:5432:5432'
+    networks:
+      - backend-network
+
+  pgadmin:
+    image: dpage/pgadmin4:9.3
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json
+    ports:
+      - '127.0.0.1:5050:80'
+    networks:
+      - backend-network
+    depends_on:
+      - postgres
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
     restart: unless-stopped
+    # Macos: Use `--protocol http2`. Increasing buffer size as described below didn't work.
+    # https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes
     command: tunnel --no-autoupdate run
     environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     networks:
-      - app-network
+      - backend-network
     depends_on:
-      - app
+      - backend
+
+volumes:
+  postgres-data:
+  pgadmin-data:
 
 networks:
-  app-network:
+  backend-network:
     driver: bridge
