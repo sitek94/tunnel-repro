@@ -44,7 +44,7 @@ services:
     restart: unless-stopped
     # Macos: Use `--protocol http2`. Increasing buffer size as described below didn't work.
     # https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes
-    command: tunnel --no-autoupdate run
+    command: tunnel --no-autoupdate --loglevel debug run
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     networks:
