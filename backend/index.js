@@ -2,6 +2,8 @@ const http = require('http')
 const {Client} = require('pg')
 
 const server = http.createServer((req, res) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`)
+
   if (req.url === '/mocks') {
     const client = new Client({
       connectionString:
@@ -12,10 +14,12 @@ const server = http.createServer((req, res) => {
       .connect()
       .then(() => client.query('SELECT * FROM mocks'))
       .then(result => {
+        console.log(`[DB] Returned ${result.rows.length} rows from mocks`)
         res.writeHead(200, {'Content-Type': 'application/json'})
         res.end(JSON.stringify(result.rows))
       })
       .catch(err => {
+        console.error('[DB ERROR]', err)
         res.writeHead(500, {'Content-Type': 'text/plain'})
         res.end('DB error: ' + err.message)
       })
