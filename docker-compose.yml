@@ -6,7 +6,7 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres
       - PORT=3000
     ports:
-      - '0.0.0.0:3000:3000'
+      - '127.0.0.1:3000:3000'
     networks:
       - backend-network
 
@@ -42,9 +42,7 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
-    # Macos: Use `--protocol http2`. Increasing buffer size as described below didn't work.
-    # https://github.com/quic-go/quic-go/wiki/UDP-Buffer-Sizes
-    command: tunnel --no-autoupdate --loglevel debug run
+    command: tunnel --protocol http2 --no-autoupdate --loglevel debug run
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
     networks:
